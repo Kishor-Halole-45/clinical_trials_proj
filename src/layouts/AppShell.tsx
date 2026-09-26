@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import gsap from 'gsap'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Bell, CalendarDays, ChevronRight, Command, FileText, HelpCircle, LayoutDashboard, MapPinned, Milestone, MonitorCog, PackageCheck, RotateCcw, Search, ShieldCheck, Siren, UserCircle2, Workflow } from 'lucide-react'
+import { Bell, CalendarDays, ChevronRight, Command, FileText, LayoutDashboard, LayoutGrid, MapPinned, Milestone, MonitorCog, PackageCheck, RotateCcw, Search, ShieldCheck, Siren, UserCircle2, Workflow } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 
 import { Dialog, DialogContent } from '../components/ui/dialog'
@@ -42,6 +41,24 @@ const navItems = [
   { label: 'System Health', to: '/system-health', icon: ShieldCheck },
   { label: 'Controlled Terminology', to: '/controlled-terminology', icon: Search },
 ]
+
+const primaryNavItems = [
+  { label: 'Portfolio', to: '/dashboard' },
+  { label: 'Studies', to: '/trials' },
+  { label: 'Safety', to: '/pharmacovigilance' },
+  { label: 'Compliance', to: '/compliance' },
+  { label: 'Analytics', to: '/reports' },
+  { label: 'Documents', to: '/documents' },
+  { label: 'Exports', to: '/exports' },
+]
+
+const moduleGroups = [
+  { label: 'Portfolio', paths: ['/dashboard', '/trials', '/sites', '/participants', '/visits', '/enrollment', '/monitoring', '/milestones'] },
+  { label: 'Safety', paths: ['/pharmacovigilance', '/adverse-events', '/sae', '/safety-signals', '/dsmb', '/alerts'] },
+  { label: 'Compliance', paths: ['/deviations', '/ethics-regulatory', '/ctri', '/consent', '/regulatory-calendar', '/compliance', '/audit'] },
+  { label: 'Data standards & interoperability', paths: ['/data-quality', '/interoperability', '/fhir/resources', '/fhir/mapping', '/fhir/validation', '/fhir/bundles', '/abdm', '/cdisc', '/datasets', '/data-mapping', '/controlled-terminology', '/validation', '/define-xml'] },
+  { label: 'Workspace', paths: ['/documents', '/exports', '/reports', '/system-health'] },
+].map((group) => ({ ...group, items: navItems.filter((item) => group.paths.includes(item.to)) }))
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Overview',
@@ -192,8 +209,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
   const location = useLocation()
   const {
-    sidebarOpen,
-    setSidebarOpen,
     searchOpen,
     setSearchOpen,
     notificationCount,
@@ -216,8 +231,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pageTitle = useMemo(() => getTitle(location.pathname), [location.pathname])
   const [query, setQuery] = useState('')
   const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [modulesOpen, setModulesOpen] = useState(false)
   const shellRef = useRef<HTMLDivElement | null>(null)
-  const sidebarRef = useRef<HTMLElement | null>(null)
 
   useLayoutEffect(() => {
     if (!shellRef.current) return
@@ -227,11 +242,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         shellRef.current,
         { opacity: 0, y: 18 },
         { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' },
-      )
-      gsap.fromTo(
-        sidebarRef.current,
-        { x: -20, opacity: 0 },
-        { x: 0, opacity: 1, duration: 0.5, ease: 'power2.out' },
       )
     }, shellRef)
 
@@ -246,6 +256,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       }
       if (event.key === 'Escape') {
         setSearchOpen(false)
+        setModulesOpen(false)
       }
     }
 
@@ -274,182 +285,98 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div ref={shellRef} className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="flex h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_38%),linear-gradient(180deg,_#020817_0%,_#0f172a_100%)]">
-        <AnimatePresence>
-          {(sidebarOpen || location.pathname === '/dashboard') && (
-            <motion.aside
-              ref={sidebarRef}
-              initial={{ x: -16, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -20, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-y-0 left-0 z-40 flex w-[250px] flex-col border-r border-slate-800 bg-slate-950/95 shadow-[0_0_40px_rgba(14,165,233,0.12)] md:relative md:z-auto"
-            >
-              <div className="flex items-center gap-3 border-b border-slate-800 px-4 py-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20">A</div>
-                <div>
-                  <div className="text-lg font-semibold tracking-[-0.03em] text-white">AIIA</div>
-                  <div className="text-[11px] uppercase tracking-[0.12em] text-slate-400">Clinical Research</div>
-                </div>
-              </div>
+    <div ref={shellRef} className="min-h-screen bg-[#f6f6f0] text-[#24372f]">
+      <header className="sticky top-0 z-30 border-b border-[#e2e5da] bg-[#fbfbf6]/95 px-4 py-3 backdrop-blur md:px-6">
+        <div className="mx-auto flex max-w-[1480px] items-center justify-between gap-3">
+          <NavLink to="/dashboard" onClick={() => setModulesOpen(false)} className="flex shrink-0 items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#315d46] text-sm font-semibold text-white">A</span>
+            <span>
+              <span className="block font-display text-base font-bold text-[#24372f]">AIIA</span>
+              <span className="hidden text-[10px] uppercase tracking-[0.12em] text-[#788278] sm:block">TrialShield</span>
+            </span>
+          </NavLink>
 
-              <div className="flex-1 space-y-4 overflow-y-auto px-3 py-4">
-                <div className="space-y-1">
-                  {navItems.slice(0, 8).map(({ label, to, icon: Icon }) => (
-                    <NavLink
-                      key={label}
-                      to={to}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                          isActive ? 'bg-cyan-500/10 text-cyan-300 ring-1 ring-cyan-500/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                        }`
-                      }
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{label}</span>
-                    </NavLink>
-                  ))}
-                </div>
+          <div className="hidden items-center gap-3 xl:flex">
+            <nav aria-label="Primary navigation" className="flex items-center gap-0.5">
+              {primaryNavItems.map((item) => (
+                <NavLink key={item.to} to={item.to} end={item.to === '/dashboard'} onClick={() => setModulesOpen(false)} className={({ isActive }) => `rounded-md px-2 py-2 text-xs font-medium transition-colors ${isActive ? 'bg-[#e8eee6] text-[#315d46]' : 'text-[#536258] hover:bg-[#f0f1e9]'}`}>
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+            <button type="button" onClick={() => setSearchOpen(true)} className="flex h-9 items-center gap-2 rounded-md border border-[#e2e5da] bg-white px-2.5 text-sm text-[#69766c] hover:border-[#b7c2b5]" aria-label="Search">
+              <Search className="h-4 w-4" /><span className="hidden 2xl:inline">Search</span>
+              <span className="hidden rounded border border-[#e2e5da] bg-[#f6f6f0] px-1.5 py-0.5 text-[10px] 2xl:inline-flex">⌘ K</span>
+            </button>
+          </div>
 
-                <div className="my-4 h-px bg-slate-800" />
-
-                <div className="space-y-1">
-                  {navItems.slice(8).map(({ label, to, icon: Icon }) => (
-                    <NavLink
-                      key={label}
-                      to={to}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                          isActive ? 'bg-cyan-500/10 text-cyan-300 ring-1 ring-cyan-500/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                        }`
-                      }
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{label}</span>
-                    </NavLink>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-t border-slate-800 bg-slate-900/75 p-3">
-                <div className="mb-2 flex items-center justify-between rounded-lg bg-slate-800/80 px-3 py-2 text-xs font-medium text-slate-200">
-                  <span>System Status</span>
-                  <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300">LIVE</span>
-                </div>
-                <div className="mb-3 flex items-center gap-3 rounded-lg px-2 py-2 text-sm text-slate-300 hover:bg-slate-800">
-                  <HelpCircle className="h-4 w-4 text-slate-400" />
-                  Help
-                </div>
-                <div className="flex items-center gap-3 rounded-lg bg-slate-800/80 px-2 py-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/10 text-xs font-semibold text-cyan-300">PI</div>
-                  <div>
-                    <div className="text-sm font-medium text-white">{currentUser.name}</div>
-                    <div className="text-[11px] uppercase tracking-[0.12em] text-slate-400">{currentUser.role}</div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <button type="button" onClick={() => setSearchOpen(true)} className="flex h-9 w-9 items-center justify-center rounded-md border border-[#e2e5da] bg-white text-[#536258] hover:bg-[#f0f1e9] xl:hidden" aria-label="Search"><Search className="h-4 w-4" /></button>
+            <div className="relative">
+              <Button type="button" size="sm" variant="outline" onClick={() => setModulesOpen(!modulesOpen)} aria-expanded={modulesOpen} aria-label="All modules">
+                <LayoutGrid className="h-4 w-4" /><span className="hidden sm:inline">All modules</span>
+              </Button>
+              {modulesOpen && (
+                <div className="absolute right-0 top-[calc(100%+12px)] z-50 max-h-[min(76vh,620px)] w-[min(92vw,820px)] overflow-y-auto rounded-lg border border-[#e2e5da] bg-[#fffdf8] p-4 shadow-[0_12px_36px_rgba(36,55,47,0.12)] sm:p-5">
+                  <h2 className="mb-4 font-display text-lg font-semibold text-[#24372f]">All modules</h2>
+                  <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {moduleGroups.map((group) => (
+                      <section key={group.label}>
+                        <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.13em] text-[#788278]">{group.label}</h3>
+                        <div className="space-y-0.5">
+                          {group.items.map(({ label, to, icon: Icon }) => (
+                            <NavLink key={to} to={to} onClick={() => setModulesOpen(false)} className={({ isActive }) => `flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors ${isActive ? 'bg-[#e8eee6] font-semibold text-[#315d46]' : 'text-[#536258] hover:bg-[#f0f1e9]'}`}>
+                              <Icon className="h-3.5 w-3.5 shrink-0" /><span>{label}</span>
+                            </NavLink>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
                   </div>
                 </div>
-              </div>
-            </motion.aside>
-          )}
-        </AnimatePresence>
-
-        <div className="flex min-w-0 flex-1 flex-col bg-background">
-          <header className="flex items-center justify-between border-b border-slate-800 bg-slate-950/70 px-4 py-3 text-slate-100 backdrop-blur md:px-6">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle sidebar">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <div>
-                <div className="text-xl font-semibold tracking-[-0.04em] text-white">{pageTitle}</div>
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                  {breadcrumbs.map((crumb, index) => (
-                    <span key={crumb} className="flex items-center gap-2">
-                      {crumb}
-                      {index < breadcrumbs.length - 1 && <ChevronRight className="h-3.5 w-3.5 text-slate-300" />}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="hidden items-center gap-3 md:flex">
-              <button
-                type="button"
-                onClick={() => setSearchOpen(true)}
-                className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2 text-sm text-slate-300 hover:border-slate-500"
-              >
-                <Search className="h-4 w-4" />
-                <span>Search</span>
-                <span className="ml-2 inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium">⌘ K</span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Button type="button" size="sm" variant="secondary" onClick={() => setDemoMode(!demoMode)} aria-label="Toggle demo mode">
-                {demoMode ? 'Demo on' : 'Demo off'}
-              </Button>
-              <Button type="button" size="sm" variant="secondary" onClick={() => setLiveSimulation(!liveSimulation)} aria-label="Toggle live simulation">
-                {liveSimulation ? 'Live' : 'Paused'}
-              </Button>
-              <Button type="button" size="sm" variant="secondary" onClick={resetDemoState} aria-label="Reset demo data">
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span className="hidden xl:inline">Reset</span>
-              </Button>
-              <button type="button" onClick={() => setNotificationsOpen(true)} className="relative rounded-lg border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50" aria-label="Notifications">
-                <Bell className="h-4 w-4" />
-                {notificationCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
-                    {notificationCount}
-                  </span>
-                )}
-              </button>
-              <div className="hidden items-center gap-3 md:flex">
-                <div className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1.5">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                  <span className="text-xs font-medium text-slate-300">{demoMode ? 'Live' : 'Demo'}</span>
-                </div>
-                <div className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-cyan-500/10 text-[10px] font-semibold text-cyan-300">{role.slice(0, 2).toUpperCase()}</div>
-                  <div>
-                    <div className="text-xs font-medium text-slate-100">{currentUser.name}</div>
-                    <select
-                      aria-label="Switch role"
-                      value={role}
-                      onChange={(event) => setRole(event.target.value as typeof role)}
-                      className="mt-0.5 bg-transparent text-[10px] uppercase tracking-[0.12em] text-slate-400 outline-none"
-                    >
-                      <option value="PI">PI</option>
-                      <option value="Coordinator">Coordinator</option>
-                      <option value="Monitor">Monitor</option>
-                      <option value="Ethics">Ethics</option>
-                      <option value="Pharmacovigilance">Pharmacovigilance</option>
-                      <option value="Data Manager">Data Manager</option>
-                      <option value="Admin">Admin</option>
-                      <option value="Regulator">Regulator</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <main className="flex-1 overflow-y-auto p-4 md:p-6">
-            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 p-2 shadow-[0_0_30px_rgba(14,165,233,0.08)]">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Global filters</span>
-              <span className="rounded-full border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200">{globalFilters.studyId}</span>
-              <span className="rounded-full border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200">{globalFilters.siteId}</span>
-              <span className="rounded-full border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200">{globalFilters.module}</span>
-              <span className="rounded-full border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200">{globalFilters.dateRange}</span>
-              {activeFilterCount > 0 && (
-                <button type="button" onClick={clearGlobalFilters} className="ml-auto text-xs font-medium text-cyan-300">
-                  Clear filters
-                </button>
               )}
             </div>
-            {children}
-          </main>
+            <div className="hidden items-center gap-1.5 2xl:flex">
+              <Button type="button" size="sm" variant="secondary" onClick={() => setDemoMode(!demoMode)} aria-label="Toggle demo mode">{demoMode ? 'Demo on' : 'Demo off'}</Button>
+              <Button type="button" size="sm" variant="secondary" onClick={() => setLiveSimulation(!liveSimulation)} aria-label="Toggle live simulation">{liveSimulation ? 'Live' : 'Paused'}</Button>
+              <Button type="button" size="sm" variant="secondary" onClick={resetDemoState} aria-label="Reset demo data"><RotateCcw className="h-3.5 w-3.5" /></Button>
+            </div>
+            <button type="button" onClick={() => setNotificationsOpen(true)} className="relative flex h-9 w-9 items-center justify-center rounded-md border border-[#e2e5da] bg-white text-[#536258] hover:bg-[#f0f1e9]" aria-label="Notifications">
+              <Bell className="h-4 w-4" />
+              {notificationCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#b5483a] px-1 text-[10px] font-semibold text-white">{notificationCount}</span>}
+            </button>
+            <div className="hidden items-center gap-2 rounded-md border border-[#e2e5da] bg-white px-2 py-1 xl:flex">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e8eee6] text-[10px] font-semibold text-[#315d46]">{role.slice(0, 2).toUpperCase()}</div>
+              <div>
+                <div className="text-xs font-medium text-[#24372f]">{currentUser.name}</div>
+                <select aria-label="Switch role" value={role} onChange={(event) => setRole(event.target.value as typeof role)} className="mt-0.5 max-w-28 bg-transparent text-[10px] uppercase tracking-[0.12em] text-[#788278] outline-none">
+                  <option value="PI">PI</option><option value="Coordinator">Coordinator</option><option value="Monitor">Monitor</option><option value="Ethics">Ethics</option><option value="Pharmacovigilance">Pharmacovigilance</option><option value="Data Manager">Data Manager</option><option value="Admin">Admin</option><option value="Regulator">Regulator</option>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </header>
+
+      <main aria-label={pageTitle} className="mx-auto w-full max-w-[1480px] p-4 md:p-6">
+        <div className="mb-3 flex flex-wrap items-center gap-1.5 text-xs text-[#788278]">
+          {breadcrumbs.map((crumb, index) => (
+            <span key={`${crumb}-${index}`} className="flex items-center gap-1.5">
+              <span className={index === breadcrumbs.length - 1 ? 'font-medium text-[#536258]' : ''}>{crumb}</span>
+              {index < breadcrumbs.length - 1 && <ChevronRight className="h-3 w-3 text-[#a3aaa0]" />}
+            </span>
+          ))}
+        </div>
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-[#e2e5da] bg-[#fbfbf6] p-2">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#788278]">Global filters</span>
+          <span className="rounded-full border border-[#e2e5da] bg-white px-2 py-1 text-xs text-[#536258]">{globalFilters.studyId}</span>
+          <span className="rounded-full border border-[#e2e5da] bg-white px-2 py-1 text-xs text-[#536258]">{globalFilters.siteId}</span>
+          <span className="rounded-full border border-[#e2e5da] bg-white px-2 py-1 text-xs text-[#536258]">{globalFilters.module}</span>
+          <span className="rounded-full border border-[#e2e5da] bg-white px-2 py-1 text-xs text-[#536258]">{globalFilters.dateRange}</span>
+          {activeFilterCount > 0 && <button type="button" onClick={clearGlobalFilters} className="ml-auto text-xs font-medium text-[#315d46]">Clear filters</button>}
+        </div>
+        {children}
+      </main>
 
       <Dialog open={notificationsOpen} onOpenChange={setNotificationsOpen}>
         <DialogContent className="max-w-xl rounded-xl p-0">
